@@ -103,7 +103,7 @@ let world = loadWorld();
 
 if (!world) {
     // No saved world, generate a new one
-    world = generatedMilestones(120,10);
+    world = generateMilestones(120,10);
     saveWorld(world);
 }
 
