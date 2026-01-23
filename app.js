@@ -84,9 +84,28 @@ function generateLocationName(index, total) {
     return `${d} ${f}`;
 }
 
-const world = generateMilestones(120, 10);
+// Save generated world to localstorage
+function saveWorld(world) {
+    localStorage.setItem("farboundWorld", JSON.stringify(world));
+}
+
+// Load world from localstorage
+function loadWorld() {
+    const saved = localStorage.getItem("farboundWorld");
+    if (saved) {
+        return JSON.parse(saved);
+    }
+    return null;
+}
+
+// Attempt to load saved world
+let world = loadWorld();
+
+if (!world) {
+    // No saved world, generate a new one
+    world = generatedMilestones(120,10);
+    saveWorld(world);
+}
 
 const output = document.getElementById("output");
-output.textContent = world
-    .map(m => `${m.name} - ${m.km}km`)
-    .join("\n");
+output.textContent = world.map(m => `${m.name} - ${m.km} km`).join("\n");
