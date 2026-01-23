@@ -1,8 +1,12 @@
 // Farbound Milestone Generator
 
-function generateMilestones(totalDistanceKM, milestoneCount) {
+function generateMilestones(totalDistanceKm, milestoneCount) {
     if (milestoneCount < 2) {
         throw new Error("Need at least 2 milestones");
+    }
+
+    if (totalDistanceKm <= 5) {
+        throw new Error("Total distance must exceed 5km start point");
     }
 
     const milestones = [];
@@ -17,8 +21,7 @@ function generateMilestones(totalDistanceKM, milestoneCount) {
     const remainingDistance = totalDistanceKm - START_DISTANCE;
     const remainingMilestones = milestoneCount - 1;
 
-    // Progressive weighting
-    // Later milestones get more distance
+    // Progressive weighting so later milestones travel farther
     const weights = [];
     let weightSum = 0;
 
@@ -40,7 +43,7 @@ function generateMilestones(totalDistanceKM, milestoneCount) {
         });
     }
 
-    // Ensure final milestone land exactly on total distance
+    // Ensure final milestone lands exactly on total distance
     milestones[milestones.length - 1].km = totalDistanceKm;
 
     return milestones;
@@ -85,5 +88,5 @@ const world = generateMilestones(120, 10);
 
 const output = document.getElementById("output");
 output.textContent = world
-.map(m => `${m.name} - ${m.km}km`)
-.map("\n");
+    .map(m => `${m.name} - ${m.km}km`)
+    .join("\n");
