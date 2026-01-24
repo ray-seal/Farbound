@@ -159,13 +159,14 @@ addStepsBtn.addEventListener("click", () => {
     milestonesEl.innerHTML = "";
     world.forEach(m => {
       const dot = document.createElement("div");
-      dot.className = "milestone-dot + (m.reached ? 'reached' : '');
-      milestonesEl.appendChild(dot);";
-  });
+      dot.className = "milestone-dot" + (m.reached ? " reached" : "");
+      milestonesEl.appendChild(dot);
+    });
   }
 
   // update display
   renderWorld();
+  renderMap();
   totalDistanceEl.textContent = totalDistance.toFixed(2);
 
   // save progress
@@ -173,6 +174,5 @@ addStepsBtn.addEventListener("click", () => {
   localStorage.setItem("farboundTotalDistance", totalDistance);
 
   // clear input
-  stepsInput.value = "";
   stepsInput.value = "";
 });
