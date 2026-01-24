@@ -124,7 +124,46 @@ const totalDistanceEl = document.getElementById("totalDistance");
 totalDistanceEl.textContent = totalDistance.toFixed(2);
 
 // -----------------------------
-// 7️⃣ Manual Step Input
+// 7️⃣ Helper Functions
+// -----------------------------
+function renderMap() {
+  const progressEl = document.getElementById("progress");
+  const milestonesEl = document.getElementById("milestones");
+
+  const percent = Math.min(
+    (totalDistance / world[world.length - 1].km) * 100,
+    100
+  );
+  progressEl.style.width = percent + "%";
+
+  milestonesEl.innerHTML = "";
+  world.forEach(m => {
+    const dot = document.createElement("div");
+    dot.className = "milestone-dot" + (m.reached ? " reached" : "");
+    milestonesEl.appendChild(dot);
+  });
+}
+
+function getArrivalText(name) {
+  const lines = [
+    `You have arrived at ${name}. The road rests here.`,
+    `${name} rises quietly as you step in.`,
+    `The journey brings you to ${name}, a place of calm.`,
+    `You reach ${name}, where the world seems to pause.`,
+    `${name} welcomes you, a haven on your path.`
+  ];
+
+  return lines[Math.floor(Math.random() * lines.length)];
+}
+
+function showArrival(milestone) {
+  document.getElementById("arrivalTitle").textContent = milestone.name;
+  document.getElementById("arrivalText").textContent = getArrivalText(milestone.name);
+  document.getElementById("arrivalOverlay").classList.remove("hidden");
+}
+
+// -----------------------------
+// 8️⃣ Manual Step Input
 // -----------------------------
 const stepsInput = document.getElementById("stepsInput");
 const addStepsBtn = document.getElementById("addStepsBtn");
@@ -150,42 +189,6 @@ addStepsBtn.addEventListener("click", () => {
       m.reached = true;
       showArrival(m);
     }
-  }
-
-  function renderMap() {
-    const progressEl = document.getElementById("progress");
-    const milestonesEl = document.getElementById("milestones");
-
-    const percent = Math.min(
-      (totalDistance / world[world.length - 1].km) * 100,
-      100
-    );
-    progressEl.style.width = percent + "%";
-
-    milestonesEl.innerHTML = "";
-    world.forEach(m => {
-      const dot = document.createElement("div");
-      dot.className = "milestone-dot" + (m.reached ? " reached" : "");
-      milestonesEl.appendChild(dot);
-    });
-  }
-
-  function getArrivalText(name) {
-    const lines = [
-      `You have arrived at ${name}. The road rests here.`,
-      `${name} rises quietly as you step in.`,
-      `The journey brings you to ${name}, a place of calm.`,
-      `You reach ${name}, where the world seems to pause.`,
-      `${name} welcomes you, a haven on your path.`
-    ];
-
-    return lines[Math.floor(Math.random() * lines.length)]
-  }
-
-  function showArrival(milestone) {
-    document.getElementById("arrivalTitle").textContent = milestone.name;
-    document.getElementById("arrivalText").textContent = getArrivalText(milestone.name);
-    document.getElementById("arrivalOverlay").classList.remove("hidden");
   }
 
   // update display
