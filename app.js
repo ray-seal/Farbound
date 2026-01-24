@@ -1,136 +1,158 @@
-// Farbound Milestone Generator
-
-function generateMilestones(totalDistanceKm, milestoneCount) {
-    if (milestoneCount < 2) {
-        throw new Error("Need at least 2 milestones");
-    }
-
-    if (totalDistanceKm <= 5) {
-        throw new Error("Total distance must exceed 5km start point");
-    }
-
-    const milestones = [];
-
-    // First milestone always fixed
-    const START_DISTANCE = 0;
-    milestones.push({
-        name: "Windmere Plains",
-        km: START_DISTANCE
-    });
-
-    const remainingDistance = totalDistanceKm - START_DISTANCE;
-    const remainingMilestones = milestoneCount - 1;
-
-    // Progressive weighting so later milestones travel farther
-    const weights = [];
-    let weightSum = 0;
-
-    for (let i = 1; i <= remainingMilestones; i++) {
-        const weight = i * i;
-        weights.push(weight);
-        weightSum += weight;
-    }
-
-    let accumulatedKm = START_DISTANCE;
-
-    for (let i = 0; i < remainingMilestones; i++) {
-        const portion = (weights[i] / weightSum) * remainingDistance;
-        accumulatedKm += portion;
-
-        milestones.push({
-            name: generateLocationName(i, remainingMilestones),
-            km: Math.round(accumulatedKm)
-        });
-    }
-
-    // Ensure final milestone lands exactly on total distance
-    milestones[milestones.length - 1].km = totalDistanceKm;
-
-    return milestones;
-}
-
+// -----------------------------
+// 1️⃣ Location Name Generator
+// -----------------------------
 function generateLocationName(index, total) {
-    if (index === total - 1) {
-        return "Farbound Expanse";
-    }
+  if (index === total - 1) {
+    return "Farbound Expanse";
+  }
 
-    const descriptors = [
-        "Stonewake",
-        "Quiet",
-        "Sunfall",
-        "Lowlight",
-        "Ashen",
-        "Still",
-        "Bright",
-        "Hollow",
-        "Windmere",
-        "Farrow"
-    ];
+  const descriptors = [
+    "Stonewake", "Quiet", "Sunfall", "Lowlight",
+    "Ashen", "Still", "Bright", "Hollow",
+    "Windmere", "Farrow"
+  ];
 
-    const features = [
-        "Crossing",
-        "Vale",
-        "Ridge",
-        "Reach",
-        "Path",
-        "Gate",
-        "Creek",
-        "Fields"
-    ];
+  const features = [
+    "Crossing", "Vale", "Ridge", "Reach",
+    "Path", "Gate", "Hollow", "Fields"
+  ];
 
-    const d = descriptors[Math.floor(Math.random() * descriptors.length)];
-    const f = features[Math.floor(Math.random() * features.length)];
+  const d = descriptors[Math.floor(Math.random() * descriptors.length)];
+  const f = features[Math.floor(Math.random() * features.length)];
 
-    return `${d} ${f}`;
+  return `${d} ${f}`;
 }
 
-// Save generated world to localstorage
+// -----------------------------
+// 2️⃣ Milestone Generator
+// -----------------------------
+function generateMilestones(totalDistanceKm, milestoneCount) {
+  if (milestoneCount < 2) {
+    throw new Error("Need at least 2 milestones");
+  }
+
+  const milestones = [];
+  const START_DISTANCE = 0; // Start at 0 km
+  milestones.push({ name: "Windmere Plains", km: START_DISTANCE });
+
+  const remainingDistance = totalDistanceKm - START_DISTANCE;
+  const remainingMilestones = milestoneCount - 1;
+
+  // Progressive weighting for later milestones
+  const weights = [];
+  let weightSum = 0;
+  for (let i = 1; i <= remainingMilestones; i++) {
+    const weight = i * i;
+    weights.push(weight);
+    weightSum += weight;
+  }
+
+  let accumulatedKm = START_DISTANCE;
+  for (let i = 0; i < remainingMilestones; i++) {
+    const portion = (weights[i] / weightSum) * remainingDistance;
+    accumulatedKm += portion;
+
+    milestones.push({
+      name: generateLocationName(i, remainingMilestones),
+      km: Math.round(accumulatedKm)
+    });
+  }
+
+  // Ensure final milestone hits total distance exactly
+  milestones[milestones.length - 1].km = totalDistanceKm;
+
+  return milestones;
+}
+
+// -----------------------------
+// 3️⃣ Persistence Helpers
+// -----------------------------
 function saveWorld(world) {
-    localStorage.setItem("farboundWorld", JSON.stringify(world));
+  localStorage.setItem("farboundWorld", JSON.stringify(world));
 }
 
-// Load world from localstorage
 function loadWorld() {
-    const saved = localStorage.getItem("farboundWorld");
-    if (saved) {
-        return JSON.parse(saved);
-    }
-    return null;
+  const saved = localStorage.getItem("farboundWorld");
+  if (saved) return JSON.parse(saved);
+  return null;
 }
 
-// Attempt to load saved world
-let world = loadWorld();
-
-if (!world) {
-    // No saved world, generate a new one
-    world = generateMilestones(120,10);
-    saveWorld(world);
-}
-
-const savedDistance = localStorage.getItem("farboundTotalDistance");
-if (savedDistance) {
-    totalDistance = parseFloat(savedDistance);
-
-    // Mark milestones as reached based on saved distance
-    for (let m of world) {
-        if (totalDistance >= m.km) {
-            m.reached = true;
-        }
-    }
-}
-
-renderWorld();
-totalDistanceEl.textContent = totalDistance.toFixed(2);
-
+// -----------------------------
+// 4️⃣ Render Milestones
+// -----------------------------
 function renderWorld() {
-    const output = document.getElementById("output");
-    output.innerHTML = world
-    .map(m => {
-        if (m.reached) {
-            return `✅️ ${m.name} - ${m.km} km`;
-        } else {
-            return `☑️ ${m.name} - ${m.km} km`;
-        }
-    })
+  const output = document.getElementById("output");
+  output.innerHTML = world
+    .map(m => m.reached ? `✅ ${m.name} – ${m.km} km` : `⬜ ${m.name} – ${m.km} km`)
     .join("\n");
 }
+
+// -----------------------------
+// 5️⃣ Manual Step Conversion
+// -----------------------------
+const STRIDE_LENGTH = 0.8; // meters
+function stepsToKm(steps, strideLength = STRIDE_LENGTH) {
+  return steps * strideLength / 1000;
+}
+
+// -----------------------------
+// 6️⃣ Initialize World
+// -----------------------------
+let world = loadWorld();
+if (!world) {
+  world = generateMilestones(120, 10);
+  saveWorld(world);
+}
+
+let totalDistance = 0;
+const savedDistance = localStorage.getItem("farboundTotalDistance");
+if (savedDistance) {
+  totalDistance = parseFloat(savedDistance);
+
+  // mark milestones reached
+  for (let m of world) {
+    if (totalDistance >= m.km) {
+      m.reached = true;
+    }
+  }
+}
+
+// Initial render
+renderWorld();
+const totalDistanceEl = document.getElementById("totalDistance");
+totalDistanceEl.textContent = totalDistance.toFixed(2);
+
+// -----------------------------
+// 7️⃣ Manual Step Input
+// -----------------------------
+const stepsInput = document.getElementById("stepsInput");
+const addStepsBtn = document.getElementById("addStepsBtn");
+
+addStepsBtn.addEventListener("click", () => {
+  const steps = parseInt(stepsInput.value);
+  if (isNaN(steps) || steps <= 0) {
+    alert("Enter a valid number of steps");
+    return;
+  }
+
+  const distance = stepsToKm(steps);
+  totalDistance += distance;
+
+  // mark milestones reached
+  for (let m of world) {
+    if (!m.reached && totalDistance >= m.km) {
+      m.reached = true;
+    }
+  }
+
+  // update display
+  renderWorld();
+  totalDistanceEl.textContent = totalDistance.toFixed(2);
+
+  // save progress
+  saveWorld(world);
+  localStorage.setItem("farboundTotalDistance", totalDistance);
+
+  // clear input
+  stepsInput.value = "";
+});
