@@ -143,6 +143,7 @@ addStepsBtn.addEventListener("click", () => {
   for (let m of world) {
     if (!m.reached && totalDistance >= m.km) {
       m.reached = true;
+      showArrival(m);
     }
   }
 
@@ -164,6 +165,24 @@ addStepsBtn.addEventListener("click", () => {
     });
   }
 
+  function getArrivalText(name) {
+    const lines = [
+      `You have arrived at ${name}. The road rests here.`,
+      `${name} rises quietly as you step in.`,
+      `The journey brings you to ${name}, a place of calm.`,
+      `You reach ${name}, where the world seems to pause.`,
+      `${name} welcomes you, a haven on your path.`
+    ];
+
+    return lines[Math.floor(Math.random() * lines.length)]
+  }
+
+  function showArrival(milestone) {
+    document.getElementById("arrivalTitle").textContent = milestone.name;
+    document.getElementById("arrivalText").textContent = getArrivalText(milestone.name);
+    document.getElementById("arrivalOverlay").classList.remove("hidden");
+  }
+
   // update display
   renderWorld();
   renderMap();
@@ -175,4 +194,8 @@ addStepsBtn.addEventListener("click", () => {
 
   // clear input
   stepsInput.value = "";
+});
+
+document.getElementById("closeArrival").addEventListener("click", () => {
+  document.getElementById("arrivalOverlay").classList.add("hidden");
 });
