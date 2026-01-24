@@ -12,7 +12,7 @@ function generateMilestones(totalDistanceKm, milestoneCount) {
     const milestones = [];
 
     // First milestone always fixed
-    const START_DISTANCE = 5;
+    const START_DISTANCE = 0;
     milestones.push({
         name: "Windmere Plains",
         km: START_DISTANCE
@@ -107,5 +107,30 @@ if (!world) {
     saveWorld(world);
 }
 
-const output = document.getElementById("output");
-output.textContent = world.map(m => `${m.name} - ${m.km} km`).join("\n");
+const savedDistance = localStorage.getItem("farboundTotalDistance");
+if (savedDistance) {
+    totalDistance = parseFloat(savedDistance);
+
+    // Mark milestones as reached based on saved distance
+    for (let m of world) {
+        if (totalDistance >= m.km) {
+            m.reached = true;
+        }
+    }
+}
+
+renderWorld();
+totalDistanceEl.textContent = totalDistance.toFixed(2);
+
+function renderWorld() {
+    const output = document.getElementById("output");
+    output.innerHTML = world
+    .map(m => {
+        if (m.reached) {
+            return `✅️ ${m.name} - ${m.km} km`;
+        } else {
+            return `☑️ ${m.name} - ${m.km} km`;
+        }
+    })
+    .join("\n");
+}
