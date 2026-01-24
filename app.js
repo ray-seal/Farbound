@@ -146,6 +146,24 @@ addStepsBtn.addEventListener("click", () => {
     }
   }
 
+  function renderMap() {
+    const progressEl = document.getElementById("progress");
+    const milestonesEl = document.getElementById("milestones");
+
+    const percent = Math.min(
+      (totalDistance / world[world.length - 1].km) * 100,
+      100
+    );
+    progressEl.style.width = percent + "%";
+
+    milestonesEl.innerHTML = "";
+    world.forEach(m => {
+      const dot = document.createElement("div");
+      dot.className = "milestone-dot + (m.reached ? 'reached' : '');
+      milestonesEl.appendChild(dot);";
+  });
+  }
+
   // update display
   renderWorld();
   totalDistanceEl.textContent = totalDistance.toFixed(2);
