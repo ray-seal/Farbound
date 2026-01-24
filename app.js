@@ -32,9 +32,9 @@ function generateMilestones(totalDistanceKm, milestoneCount) {
   }
 
   const milestones = [
-    { name: "Windmere Plains", km: 0 }
+    { name: "Windmere Plains", km: 0 },
     { name: "First Steps", km: 5 }
-    ];
+  ];
 
   const remainingDistance = totalDistanceKm - 5;
   const remainingMilestones = milestoneCount - 2;
@@ -85,7 +85,7 @@ function renderWorld() {
   const output = document.getElementById("output");
   output.innerHTML = world
     .map(m => m.reached ? `✅ ${m.name} – ${m.km} km` : `⬜ ${m.name} – ${m.km} km`)
-    .join("\n");
+    .join("<br>");
 }
 
 // -----------------------------
@@ -155,5 +155,6 @@ addStepsBtn.addEventListener("click", () => {
   localStorage.setItem("farboundTotalDistance", totalDistance);
 
   // clear input
+  stepsInput.value = "";
   stepsInput.value = "";
 });
