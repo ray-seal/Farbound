@@ -31,12 +31,13 @@ function generateMilestones(totalDistanceKm, milestoneCount) {
     throw new Error("Need at least 2 milestones");
   }
 
-  const milestones = [];
-  const START_DISTANCE = 0; // Start at 0 km
-  milestones.push({ name: "Windmere Plains", km: START_DISTANCE });
+  const milestones = [
+    { name: "Windmere Plains", km: 0 }
+    { name: "First Steps", km: 5 }
+    ];
 
-  const remainingDistance = totalDistanceKm - START_DISTANCE;
-  const remainingMilestones = milestoneCount - 1;
+  const remainingDistance = totalDistanceKm - 5;
+  const remainingMilestones = milestoneCount - 2;
 
   // Progressive weighting for later milestones
   const weights = [];
@@ -47,15 +48,10 @@ function generateMilestones(totalDistanceKm, milestoneCount) {
     weightSum += weight;
   }
 
-  let accumulatedKm = START_DISTANCE;
-
+  let accumulatedKm = 5;
   for (let i = 0; i < remainingMilestones; i++) {
     const portion = (weights[i] / weightSum) * remainingDistance;
     accumulatedKm += portion;
-
-    if (i === 0 && accumulatedKm <= START_DISTANCE) {
-        accumulatedKm = Math.max(START_DISTANCE + 1, accumulatedKm);
-    }
 
     milestones.push({
       name: generateLocationName(i, remainingMilestones),
