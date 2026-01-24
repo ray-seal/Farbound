@@ -129,6 +129,11 @@ totalDistanceEl.textContent = totalDistance.toFixed(2);
 const stepsInput = document.getElementById("stepsInput");
 const addStepsBtn = document.getElementById("addStepsBtn");
 
+// Close arrival overlay
+document.getElementById("closeArrival").addEventListener("click", () => {
+  document.getElementById("arrivalOverlay").classList.add("hidden");
+});
+
 addStepsBtn.addEventListener("click", () => {
   const steps = parseInt(stepsInput.value);
   if (isNaN(steps) || steps <= 0) {
@@ -194,8 +199,4 @@ addStepsBtn.addEventListener("click", () => {
 
   // clear input
   stepsInput.value = "";
-});
-
-document.getElementById("closeArrival").addEventListener("click", () => {
-  document.getElementById("arrivalOverlay").classList.add("hidden");
 });
