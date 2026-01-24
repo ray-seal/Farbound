@@ -48,9 +48,14 @@ function generateMilestones(totalDistanceKm, milestoneCount) {
   }
 
   let accumulatedKm = START_DISTANCE;
+
   for (let i = 0; i < remainingMilestones; i++) {
     const portion = (weights[i] / weightSum) * remainingDistance;
     accumulatedKm += portion;
+
+    if (i === 0 && accumulatedKm <= START_DISTANCE) {
+        accumulatedKm = Math.max(START_DISTANCE + 1, accumulatedKm);
+    }
 
     milestones.push({
       name: generateLocationName(i, remainingMilestones),
