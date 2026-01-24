@@ -122,6 +122,7 @@ if (savedDistance) {
 renderWorld();
 const totalDistanceEl = document.getElementById("totalDistance");
 totalDistanceEl.textContent = totalDistance.toFixed(2);
+renderMap();
 
 // -----------------------------
 // 7️⃣ Helper Functions
