@@ -168,74 +168,115 @@ function stepsToKm(steps, strideLength = STRIDE_LENGTH) {
 let pedometer = null;
 let lastStepCount = 0;
 let pedometerSupported = false;
+let accelerometerSteps = 0;
 
 async function initPedometer() {
   const statusEl = document.getElementById("pedometerStatus");
   
-  // Check for Pedometer API (Android/some devices)
-  if ('Pedometer' in window) {
+  // First, request motion/sensor permissions
+  if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
     try {
-      pedometer = new Pedometer();
-      await pedometer.start();
-      pedometerSupported = true;
-      statusEl.textContent = "✅ Step tracking active";
-      statusEl.style.color = "#2ecc71";
-      
-      // Poll for step updates
-      setInterval(async () => {
-        const steps = await pedometer.getSteps();
-        updateStepsFromDevice(steps);
-      }, 5000); // Check every 5 seconds
-      
-      return;
-    } catch (err) {
-      console.warn("Pedometer API failed:", err);
-    }
-  }
-  
-  // Check for Step Counter sensor (newer Android)
-  if ('StepCounter' in window) {
-    try {
-      const sensor = new StepCounter({ frequency: 1 });
-      sensor.addEventListener('reading', () => {
-        updateStepsFromDevice(sensor.steps);
-      });
-      await sensor.start();
-      pedometerSupported = true;
-      statusEl.textContent = "✅ Step tracking active";
-      statusEl.style.color = "#2ecc71";
-      return;
-    } catch (err) {
-      console.warn("StepCounter API failed:", err);
-    }
-  }
-  
-  // Check for Web Activity API (limited support)
-  if ('ActivityRecognition' in window) {
-    try {
-      const result = await navigator.permissions.query({ name: 'activity-recognition' });
-      if (result.state === 'granted') {
-        // Attempt to use Activity Recognition
-        pedometerSupported = true;
-        statusEl.textContent = "⚠️ Limited step tracking";
-        statusEl.style.color = "#f39c12";
+      const permission = await DeviceMotionEvent.requestPermission();
+      if (permission !== 'granted') {
+        statusEl.innerHTML = '⚠️ Motion permission denied. <button id="requestPermBtn">Request Permission</button>';
+        statusEl.style.color = "#e74c3c";
+        document.getElementById("requestPermBtn")?.addEventListener("click", initPedometer);
+        document.getElementById("manualEntry").classList.remove("hidden");
         return;
       }
     } catch (err) {
-      console.warn("Activity Recognition failed:", err);
+      console.warn("Permission request failed:", err);
+    }
+  }
+  
+  // Try Accelerometer API (Generic Sensor API - modern approach)
+  if ('Accelerometer' in window) {
+    try {
+      const accel = new Accelerometer({ frequency: 10 });
+      let lastMagnitude = 0;
+      let stepThreshold = 1.2;
+      
+      accel.addEventListener('reading', () => {
+        const { x, y, z } = accel;
+        const magnitude = Math.sqrt(x * x + y * y + z * z);
+        
+        // Simple step detection: detect significant changes in acceleration
+        if (Math.abs(magnitude - lastMagnitude) > stepThreshold) {
+          accelerometerSteps++;
+          if (accelerometerSteps % 10 === 0) { // Update every 10 steps
+            updateStepsFromDevice(accelerometerSteps);
+          }
+        }
+        lastMagnitude = magnitude;
+      });
+      
+      await accel.start();
+      pedometerSupported = true;
+      statusEl.textContent = "✅ Step tracking active (motion sensor)";
+      statusEl.style.color = "#2ecc71";
+      
+      // Load saved step count
+      const saved = localStorage.getItem("farboundStepCount");
+      if (saved) accelerometerSteps = parseInt(saved);
+      
+      return;
+    } catch (err) {
+      console.warn("Accelerometer API failed:", err);
+    }
+  }
+  
+  // Try DeviceMotion API (iOS/Android fallback)
+  if (window.DeviceMotionEvent) {
+    try {
+      let lastY = 0;
+      let stepDetected = false;
+      
+      window.addEventListener('devicemotion', (event) => {
+        const accel = event.accelerationIncludingGravity;
+        if (accel && accel.y !== null) {
+          const threshold = 1.5;
+          if (Math.abs(accel.y - lastY) > threshold && !stepDetected) {
+            accelerometerSteps++;
+            stepDetected = true;
+            setTimeout(() => { stepDetected = false; }, 300); // Debounce
+            
+            if (accelerometerSteps % 10 === 0) {
+              updateStepsFromDevice(accelerometerSteps);
+            }
+          }
+          lastY = accel.y;
+        }
+      });
+      
+      pedometerSupported = true;
+      statusEl.textContent = "✅ Step tracking active (device motion)";
+      statusEl.style.color = "#2ecc71";
+      
+      // Load saved step count
+      const saved = localStorage.getItem("farboundStepCount");
+      if (saved) accelerometerSteps = parseInt(saved);
+      
+      return;
+    } catch (err) {
+      console.warn("DeviceMotion API failed:", err);
     }
   }
   
   // Fallback: no pedometer support
-  statusEl.textContent = "⚠️ Automatic step tracking not available. Use manual entry.";
+  statusEl.innerHTML = '⚠️ Automatic step tracking not available on this device. <a href="#" id="showManualLink">Use manual entry</a>';
   statusEl.style.color = "#e74c3c";
   document.getElementById("manualEntry").classList.remove("hidden");
+  document.getElementById("showManualLink")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    document.getElementById("manualEntry").classList.remove("hidden");
+  });
 }
 
 function updateStepsFromDevice(currentSteps) {
   // First time or reset detection
   if (lastStepCount === 0) {
     lastStepCount = currentSteps;
+    localStorage.setItem("farboundStepCount", currentSteps);
     return;
   }
   
@@ -260,11 +301,13 @@ function updateStepsFromDevice(currentSteps) {
     // Update display
     renderWorld();
     renderMap();
+    const totalDistanceEl = document.getElementById("totalDistance");
     totalDistanceEl.textContent = totalDistance.toFixed(2);
     
     // Save progress
     saveWorld(world);
     localStorage.setItem("farboundTotalDistance", totalDistance);
+    localStorage.setItem("farboundStepCount", currentSteps);
   }
 }
 
@@ -456,6 +499,22 @@ document.getElementById("resetJourney")?.addEventListener("click", () => {
     localStorage.removeItem("farboundWorld");
     localStorage.removeItem("farboundTotalDistance");
     localStorage.removeItem("farboundJourneyType");
+    localStorage.removeItem("farboundStepCount");
     location.reload();
   }
 });
+
+// -----------------------------
+// 1️⃣2️⃣ Service Worker Registration (PWA)
+// -----------------------------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then((registration) => {
+        console.log('ServiceWorker registration successful:', registration.scope);
+      })
+      .catch((err) => {
+        console.log('ServiceWorker registration failed:', err);
+      });
+  });
+}
