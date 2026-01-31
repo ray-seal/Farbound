@@ -37,7 +37,8 @@
                 <div class="journey-card" data-journey="custom">
                     <h3>✨ Custom Journey</h3>
                     <p>Create your own adventure</p>
-                    <input type="number" id="customDistance" placeholder="Distance (km)" min="10" max="10000" />
+                    <input type="number" id="customDistance" placeholder="Distance (km)" min="10" max="10000" onclick="event.stopPropagation()" />
+                    <button id="startCustomJourney" onclick="event.stopPropagation()">Start Journey</button>
                 </div>
             </div>
         </div>
