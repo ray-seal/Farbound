@@ -193,19 +193,31 @@ async function initPedometer() {
   if ('Accelerometer' in window) {
     try {
       const accel = new Accelerometer({ frequency: 10 });
-      let lastMagnitude = 0;
-      let stepThreshold = 1.2;
+      let lastMagnitude = 9.8; // Start with approximate gravity
+      let stepThreshold = 1.5;
+      let lastStepTime = 0;
+      const minStepInterval = 200; // Minimum 200ms between steps
+      const debugEl = document.getElementById("motionDebug");
       
       accel.addEventListener('reading', () => {
         const { x, y, z } = accel;
         const magnitude = Math.sqrt(x * x + y * y + z * z);
+        const now = Date.now();
+        
+        // Show debug info
+        if (debugEl) {
+          debugEl.textContent = `Motion: ${magnitude.toFixed(2)} m/s²`;
+        }
         
         // Simple step detection: detect significant changes in acceleration
-        if (Math.abs(magnitude - lastMagnitude) > stepThreshold) {
+        if (Math.abs(magnitude - lastMagnitude) > stepThreshold && 
+            now - lastStepTime > minStepInterval) {
           accelerometerSteps++;
-          if (accelerometerSteps % 10 === 0) { // Update every 10 steps
-            updateStepsFromDevice(accelerometerSteps);
-          }
+          lastStepTime = now;
+          
+          // Update display and progress
+          document.getElementById("stepCount").textContent = accelerometerSteps.toLocaleString();
+          updateStepsFromDevice(accelerometerSteps);
         }
         lastMagnitude = magnitude;
       });
@@ -215,9 +227,12 @@ async function initPedometer() {
       statusEl.textContent = "✅ Step tracking active (motion sensor)";
       statusEl.style.color = "#2ecc71";
       
-      // Load saved step count
+      // Load saved step count and display it
       const saved = localStorage.getItem("farboundStepCount");
-      if (saved) accelerometerSteps = parseInt(saved);
+      if (saved) {
+        accelerometerSteps = parseInt(saved);
+        document.getElementById("stepCount").textContent = accelerometerSteps.toLocaleString();
+      }
       
       return;
     } catch (err) {
@@ -228,23 +243,31 @@ async function initPedometer() {
   // Try DeviceMotion API (iOS/Android fallback)
   if (window.DeviceMotionEvent) {
     try {
-      let lastY = 0;
+      let lastMagnitude = 9.8;
       let stepDetected = false;
+      const debugEl = document.getElementById("motionDebug");
       
       window.addEventListener('devicemotion', (event) => {
         const accel = event.accelerationIncludingGravity;
-        if (accel && accel.y !== null) {
+        if (accel && accel.x !== null && accel.y !== null && accel.z !== null) {
+          const magnitude = Math.sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
           const threshold = 1.5;
-          if (Math.abs(accel.y - lastY) > threshold && !stepDetected) {
+          
+          // Show debug info
+          if (debugEl) {
+            debugEl.textContent = `Motion: ${magnitude.toFixed(2)} m/s²`;
+          }
+          
+          if (Math.abs(magnitude - lastMagnitude) > threshold && !stepDetected) {
             accelerometerSteps++;
             stepDetected = true;
-            setTimeout(() => { stepDetected = false; }, 300); // Debounce
+            setTimeout(() => { stepDetected = false; }, 250); // Debounce
             
-            if (accelerometerSteps % 10 === 0) {
-              updateStepsFromDevice(accelerometerSteps);
-            }
+            // Update display immediately
+            document.getElementById("stepCount").textContent = accelerometerSteps.toLocaleString();
+            updateStepsFromDevice(accelerometerSteps);
           }
-          lastY = accel.y;
+          lastMagnitude = magnitude;
         }
       });
       
@@ -252,9 +275,12 @@ async function initPedometer() {
       statusEl.textContent = "✅ Step tracking active (device motion)";
       statusEl.style.color = "#2ecc71";
       
-      // Load saved step count
+      // Load saved step count and display it
       const saved = localStorage.getItem("farboundStepCount");
-      if (saved) accelerometerSteps = parseInt(saved);
+      if (saved) {
+        accelerometerSteps = parseInt(saved);
+        document.getElementById("stepCount").textContent = accelerometerSteps.toLocaleString();
+      }
       
       return;
     } catch (err) {
@@ -268,27 +294,21 @@ async function initPedometer() {
   document.getElementById("manualEntry").classList.remove("hidden");
   document.getElementById("showManualLink")?.addEventListener("click", (e) => {
     e.preventDefault();
-    document.getElementById("manualEntry").classList.remove("hidden");
-  });
-}
-
-function updateStepsFromDevice(currentSteps) {
+    dSave current step count
+  localStorage.setItem("farboundStepCount", currentSteps);
+  
   // First time or reset detection
   if (lastStepCount === 0) {
     lastStepCount = currentSteps;
-    localStorage.setItem("farboundStepCount", currentSteps);
     return;
   }
   
   const newSteps = currentSteps - lastStepCount;
-  if (newSteps > 0 && newSteps < 10000) { // Sanity check
+  if (newSteps > 0) { // Any positive steps
     lastStepCount = currentSteps;
     
     const distance = stepsToKm(newSteps);
     totalDistance += distance;
-    
-    // Update step count display
-    document.getElementById("stepCount").textContent = currentSteps.toLocaleString();
     
     // Check milestones
     for (let m of world) {
@@ -303,6 +323,10 @@ function updateStepsFromDevice(currentSteps) {
     renderMap();
     const totalDistanceEl = document.getElementById("totalDistance");
     totalDistanceEl.textContent = totalDistance.toFixed(2);
+    
+    // Save progress
+    saveWorld(world);
+    localStorage.setItem("farboundTotalDistance", totalDistance;
     
     // Save progress
     saveWorld(world);
