@@ -337,6 +337,29 @@ let world = null;
 let totalDistance = 0;
 let currentJourneyType = loadJourneyType();
 
+function startJourney(journeyWorld, journeyName, journeyType) {
+  world = journeyWorld;
+  document.getElementById("journeyTitle").textContent = journeyName;
+  saveJourneyType(journeyType);
+  
+  totalDistance = 0;
+  saveWorld(world);
+  localStorage.setItem("farboundTotalDistance", "0");
+  localStorage.setItem("farboundStepCount", "0");
+  
+  // Switch to main app
+  document.getElementById("journeySelection").classList.add("hidden");
+  document.getElementById("mainApp").classList.remove("hidden");
+  
+  renderWorld();
+  const totalDistanceEl = document.getElementById("totalDistance");
+  totalDistanceEl.textContent = "0.00";
+  renderMap();
+  
+  // Initialize pedometer
+  initPedometer();
+}
+
 // Check if we have an existing journey
 if (currentJourneyType) {
   // Load existing journey
@@ -375,71 +398,48 @@ if (currentJourneyType) {
   // Show journey selection
   document.getElementById("journeySelection").classList.remove("hidden");
   document.getElementById("mainApp").classList.add("hidden");
+  
+  // Set up journey selection event listeners
+  setupJourneySelection();
 }
 
 // -----------------------------
 // 9️⃣ Journey Selection
 // -----------------------------
-// Preset journey cards
-document.querySelectorAll(".journey-card:not([data-journey='custom'])").forEach(card => {
-  card.addEventListener("click", (e) => {
-    const journeyType = card.dataset.journey;
-    const journey = JOURNEYS[journeyType];
-    
-    if (!journey) return;
-    
-    world = JSON.parse(JSON.stringify(journey.milestones)); // Deep copy
-    document.getElementById("journeyTitle").textContent = journey.name;
-    saveJourneyType(journeyType);
-    
-    totalDistance = 0;
-    saveWorld(world);
-    localStorage.setItem("farboundTotalDistance", "0");
-    
-    // Switch to main app
-    document.getElementById("journeySelection").classList.add("hidden");
-    document.getElementById("mainApp").classList.remove("hidden");
-    
-    renderWorld();
-    const totalDistanceEl = document.getElementById("totalDistance");
-    totalDistanceEl.textContent = "0.00";
-    renderMap();
-    
-    // Initialize pedometer
-    initPedometer();
+function setupJourneySelection() {
+  // Preset journey cards
+  document.querySelectorAll(".journey-card:not([data-journey='custom'])").forEach(card => {
+    card.addEventListener("click", (e) => {
+      const journeyType = card.dataset.journey;
+      const journey = JOURNEYS[journeyType];
+      
+      if (!journey) {
+        console.error("Journey not found:", journeyType);
+        return;
+      }
+      
+      const journeyWorld = JSON.parse(JSON.stringify(journey.milestones)); // Deep copy
+      startJourney(journeyWorld, journey.name, journeyType);
+    });
   });
-});
 
-// Custom journey button
-document.getElementById("startCustomJourney")?.addEventListener("click", (e) => {
-  e.stopPropagation();
-  
-  const customDist = parseInt(document.getElementById("customDistance").value);
-  if (!customDist || customDist < 10 || customDist > 10000) {
-    alert("Please enter a valid distance between 10 and 10000 km");
-    return;
+  // Custom journey button
+  const startCustomBtn = document.getElementById("startCustomJourney");
+  if (startCustomBtn) {
+    startCustomBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      
+      const customDist = parseInt(document.getElementById("customDistance").value);
+      if (!customDist || customDist < 10 || customDist > 10000) {
+        alert("Please enter a valid distance between 10 and 10000 km");
+        return;
+      }
+      
+      const journeyWorld = generateMilestones(customDist, Math.min(Math.floor(customDist / 100) + 2, 15));
+      startJourney(journeyWorld, `Custom Journey (${customDist} km)`, "custom");
+    });
   }
-  
-  world = generateMilestones(customDist, Math.min(Math.floor(customDist / 100) + 2, 15));
-  document.getElementById("journeyTitle").textContent = `Custom Journey (${customDist} km)`;
-  saveJourneyType("custom");
-  
-  totalDistance = 0;
-  saveWorld(world);
-  localStorage.setItem("farboundTotalDistance", "0");
-  
-  // Switch to main app
-  document.getElementById("journeySelection").classList.add("hidden");
-  document.getElementById("mainApp").classList.remove("hidden");
-  
-  renderWorld();
-  const totalDistanceEl = document.getElementById("totalDistance");
-  totalDistanceEl.textContent = "0.00";
-  renderMap();
-  
-  // Initialize pedometer
-  initPedometer();
-});
+}
 
 // -----------------------------
 // 🔟 Helper Functions
