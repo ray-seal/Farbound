@@ -7,31 +7,72 @@
         <link rel="stylesheet" href="style.css" />
     </head>
     <body>
-        <h1>Farbound</h1>
-        <p id="output">Generating world...</p>
-
-        <!-- Manual step entry -->
-         <div>
-            <label for="stepsInput">Steps Walked:</label>
-            <input type="number" id="stepsInput" placeholder="e.g., 5000" />
-            <button id="addStepsBtn">Add Steps</button>
-         </div>
-         <div id="map">
-            <div id="path">
-                <div id="progress"></div>
+        <!-- Journey Selection Screen -->
+        <div id="journeySelection">
+            <h1>Farbound</h1>
+            <h2>Choose Your Journey</h2>
+            <div class="journey-options">
+                <div class="journey-card" data-journey="lands-end">
+                    <h3>🏴󠁧󠁢󠁥󠁮󠁧󠁿 Land's End to John O'Groats</h3>
+                    <p>1,407 km • The UK's most iconic challenge</p>
+                    <p class="journey-desc">From England's southwestern tip to Scotland's northern edge</p>
+                </div>
+                <div class="journey-card" data-journey="three-peaks">
+                    <h3>⛰️ Three Peaks Challenge</h3>
+                    <p>737 km • Conquer Britain's highest mountains</p>
+                    <p class="journey-desc">Ben Nevis, Scafell Pike, and Snowdon</p>
+                </div>
+                <div class="journey-card" data-journey="hobbiton">
+                    <h3>🌋 Hobbiton to Mount Doom</h3>
+                    <p>1,779 km • Frodo's epic journey</p>
+                    <p class="journey-desc">From the Shire to the fires of Mordor</p>
+                </div>
+                <div class="journey-card" data-journey="custom">
+                    <h3>✨ Custom Journey</h3>
+                    <p>Create your own adventure</p>
+                    <input type="number" id="customDistance" placeholder="Distance (km)" min="10" max="10000" />
+                </div>
             </div>
-            <div id="milestones"></div>
-         </div>
-         <p>Total Distance: <span id="totalDistance">0</span> km</p>
+        </div>
 
-         <div id="arrivalOverlay" class="hidden">
-            <div id="arrivalCard">
-                <h2 id="arrivalTitle"></h2>
-                <p id="arrivalText"></p>
-                <button id="closeArrival">Continue</button>
+        <!-- Main App Screen -->
+        <div id="mainApp" class="hidden">
+            <h1>Farbound</h1>
+            <h2 id="journeyTitle"></h2>
+            <p id="output">Loading journey...</p>
+
+            <!-- Step Tracking -->
+            <div id="stepTracking">
+                <p id="todaySteps">Today's Steps: <span id="stepCount">0</span></p>
+                <p id="pedometerStatus"></p>
+                <button id="manualEntryToggle">Manual Entry</button>
             </div>
-         </div>
 
-         <script src="app.js"></script>
+            <!-- Manual step entry (hidden by default) -->
+            <div id="manualEntry" class="hidden">
+                <label for="stepsInput">Steps Walked:</label>
+                <input type="number" id="stepsInput" placeholder="e.g., 5000" />
+                <button id="addStepsBtn">Add Steps</button>
+            </div>
+
+            <div id="map">
+                <div id="path">
+                    <div id="progress"></div>
+                </div>
+                <div id="milestones"></div>
+            </div>
+            <p>Total Distance: <span id="totalDistance">0</span> km</p>
+            <button id="resetJourney">Choose Different Journey</button>
+
+            <div id="arrivalOverlay" class="hidden">
+                <div id="arrivalCard">
+                    <h2 id="arrivalTitle"></h2>
+                    <p id="arrivalText"></p>
+                    <button id="closeArrival">Continue</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="app.js"></script>
     </body>
 </html>
